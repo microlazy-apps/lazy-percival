@@ -12,6 +12,8 @@ support_mobile: false
 screenshots:
   pc:
     - lazycat/screenshots/01-hero.png
+    - lazycat/screenshots/02-notebook.png
+    - lazycat/screenshots/03-welcome.png
   mobile: []
 
 # Long description (review/create body.infos[].description). Per locale.
