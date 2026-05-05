@@ -1,0 +1,43 @@
+/* Write your global styles here, in PostCSS syntax */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CodeMirror styles */
+.cm-editor.cm-focused {
+  outline: none !important;
+}
+
+.cm-editor .cm-scroller {
+  font-size: 0.95rem;
+  @apply font-mono bg-zinc-50 rounded-sm border border-zinc-200 transition-colors;
+}
+
+.cm-editor .cm-scroller .cm-activeLine {
+  @apply bg-inherit;
+}
+
+.cm-editor .cm-gutters {
+  border-right: 0;
+  @apply bg-inherit;
+}
+
+.cm-editor .cm-foldGutter .cm-gutterElement {
+  display: none;
+}
+
+.cm-editor .cm-lineNumbers {
+  @apply bg-zinc-100;
+}
+
+.cm-editor .cm-lineNumbers .cm-gutterElement {
+  @apply mr-1 bg-transparent;
+}
+
+.cm-editor .cm-content {
+  @apply py-2;
+}
+
+.cm-editor .cm-line {
+  @apply border-transparent border-l-4 px-2 transition-colors;
+}

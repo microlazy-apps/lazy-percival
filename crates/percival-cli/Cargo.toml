@@ -1,0 +1,9 @@
+[package]
+name = "percival-cli"
+version = "0.1.0"
+authors = ["Eric Zhang <ekzhang1@gmail.com>"]
+edition = "2021"
+
+[dependencies]
+clap = { version = "3.0.7", features = ["derive"] }
+percival = { path = "../percival" }
