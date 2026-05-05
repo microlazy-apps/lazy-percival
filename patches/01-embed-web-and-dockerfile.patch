@@ -23,7 +23,7 @@ index 0000000..0743b04
 +test-loader.js
 diff --git a/Dockerfile b/Dockerfile
 new file mode 100644
-index 0000000..ce296a4
+index 0000000..b2bb41b
 --- /dev/null
 +++ b/Dockerfile
 @@ -0,0 +1,69 @@
@@ -70,7 +70,7 @@ index 0000000..ce296a4
 +COPY patches ./patches
 +COPY --from=wasm-builder /build/crates/percival-wasm/pkg ./crates/percival-wasm/pkg
 +RUN --mount=type=cache,target=/root/.npm \
-+    npm ci --no-audit --no-fund
++    npm install --no-audit --no-fund --no-save
 +COPY . .
 +# Re-stamp pkg in case .dockerignore would have hidden it from `COPY . .`.
 +COPY --from=wasm-builder /build/crates/percival-wasm/pkg ./crates/percival-wasm/pkg
