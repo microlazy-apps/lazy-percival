@@ -1,0 +1,52 @@
+# Submission metadata for lazycat developer center.
+# Consumed by lazycat-ci/scripts/bootstrap-app.py — NOT by lzc-cli or lazycat runtime.
+# These fields go into POST /api/v3/developer/app/{create,review/create}.
+
+source: https://github.com/ekzhang/percival
+source_author: ekzhang
+is_original: false
+keywords: datalog,notebook,data-analysis,visualization,svelte,wasm,reactive,query-language
+support_pc: true
+support_mobile: false
+
+screenshots:
+  pc:
+    - lazycat/screenshots/01-hero.png
+  mobile: []
+
+# Long description (review/create body.infos[].description). Per locale.
+description:
+  zh-CN: |
+    Percival 是一种声明式数据查询与可视化语言，提供响应式 Web 笔记本环境，
+    用于探索复杂数据集、生成交互式图形并分享结果。
+
+    特性
+    - 声明式 Datalog 查询语言，结合关系型数据查询的灵活与可视化语法的优雅
+    - 与 Observable Plot 集成的交互式可视化
+    - Web Worker 沙箱化的多线程计算
+    - Rust + WebAssembly 编译器，浏览器内 JIT 编译 Datalog 到 JavaScript
+    - 实时响应式数据流，自动追踪 cell 间依赖
+    - 完全在浏览器里运行，服务端无状态，数据不会上传
+
+    使用：装好 lpk 后访问 https://percival.{你的微服域名} 即可开始。
+
+    上游项目: https://github.com/ekzhang/percival
+    本仓库（懒猫包装）: https://github.com/microlazy-apps/lazy-percival
+  en: |
+    Percival is a declarative data query and visualization language. It provides
+    a reactive, web-based notebook environment for exploring complex datasets,
+    producing interactive graphics, and sharing results.
+
+    Features
+    - Declarative Datalog query language combining relational query flexibility
+      with the elegance of exploratory visualization grammars
+    - Interactive visualization via Observable Plot integration
+    - Multi-threaded sandboxed execution via Web Workers
+    - Rust + WebAssembly compiler doing in-browser JIT of Datalog to JavaScript
+    - Reactive dataflow with automatic cell dependency tracking
+    - Fully client-side: server is stateless, your data never leaves the browser
+
+    Usage: install the lpk and open https://percival.{your-box-domain}.
+
+    Upstream project: https://github.com/ekzhang/percival
+    This wrapper repo: https://github.com/microlazy-apps/lazy-percival

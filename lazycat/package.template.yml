@@ -1,0 +1,67 @@
+package: cloud.lazycat.app.percival
+version: ${VERSION}
+name: Percival
+description: 基于 Web 的响应式 Datalog 笔记本，用于数据查询与可视化
+author: ekzhang
+license: MIT
+homepage: https://github.com/microlazy-apps/lazy-percival
+locales:
+  zh-CN:
+    name: Percival
+    description: 自托管 Percival —— 基于 Web 的响应式 Datalog 笔记本，用于数据查询与可视化
+    usage: |
+      ## 关于 Percival
+
+      Percival 是一种声明式数据查询与可视化语言，提供响应式 Web 笔记本环境，
+      用于探索复杂数据集、生成交互式图形并分享结果。
+
+      ## 使用
+
+      装好后访问 `https://percival.{你的微服域名}` 打开笔记本界面。
+
+      所有 Datalog 编译（Rust + WebAssembly）和数据计算（Web Workers）都在
+      浏览器里完成 —— 服务端只是静态托管，不会接触到你的数据。
+
+      ## 功能特性
+
+      - 声明式 Datalog 查询语言
+      - 与 Observable Plot 集成的交互式可视化
+      - Web Worker 沙箱化的多线程计算
+      - 实时响应式数据流，自动追踪 cell 间依赖
+      - 完全在浏览器里运行，无后端状态
+
+      ## 注意
+
+      上游 percival.ink 提供的「分享笔记本到 GitHub Gist」功能需要 percival-bot
+      账号 token，自托管版默认禁用。本地保存 .percival 文件即可分发笔记本。
+  en:
+    name: Percival
+    description: Self-hosted Percival — web-based reactive Datalog notebooks for data analysis and visualization
+    usage: |
+      ## About Percival
+
+      Percival is a declarative data query and visualization language. It
+      provides a reactive, web-based notebook environment for exploring complex
+      datasets, producing interactive graphics, and sharing results.
+
+      ## Getting Started
+
+      After installation, open `https://percival.{your-box-domain}` in any browser.
+
+      All Datalog compilation (Rust + WebAssembly) and data computation (Web
+      Workers) happen in your browser — the server only hosts static files and
+      never sees your data.
+
+      ## Features
+
+      - Declarative Datalog query language
+      - Interactive visualization via Observable Plot
+      - Multi-threaded sandboxed execution via Web Workers
+      - Reactive dataflow with automatic cell dependency tracking
+      - Fully client-side: no hidden backend state
+
+      ## Note
+
+      The "share notebook as GitHub Gist" feature on percival.ink requires a
+      percival-bot account token; it is disabled by default in this self-hosted
+      build. Save your notebook as a local .percival file to share.

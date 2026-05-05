@@ -1,0 +1,167 @@
+diff --git a/.dockerignore b/.dockerignore
+new file mode 100644
+index 0000000..0743b04
+--- /dev/null
++++ b/.dockerignore
+@@ -0,0 +1,17 @@
++# Keep build context small. Docker doesn't read .gitignore — only .dockerignore.
++node_modules
++target
++dist
++pkg
++crates/percival-wasm/pkg
++.git
++.github
++.vscode
++.vercel
++.idea
++.DS_Store
++*.lpk
++*.log
++test.html
++mocha-setup.js
++test-loader.js
+diff --git a/Dockerfile b/Dockerfile
+new file mode 100644
+index 0000000..ce296a4
+--- /dev/null
++++ b/Dockerfile
+@@ -0,0 +1,69 @@
++# Multi-stage build for self-hosted Percival.
++#
++# Layer cache is the bottleneck — order COPYs so a Svelte-only edit doesn't
++# rebuild the WASM crate or re-download npm/go modules.
++#
++# Stages:
++#   wasm-builder  Rust + wasm-pack       -> crates/percival-wasm/pkg/
++#   web-builder   Node + Vite            -> dist/
++#   go-builder    Go + //go:embed dist   -> /percival
++#   final         distroless static      -> single binary, no shell
++#
++# The resulting image is a self-contained binary that serves the SPA on :8080.
++# Optional Gist sharing (/api) is gated by ENABLE_GIST_API=true at runtime.
++
++FROM rust:1.78-slim-bookworm AS wasm-builder
++WORKDIR /build
++RUN apt-get update \
++    && apt-get install -y --no-install-recommends curl ca-certificates \
++    && rm -rf /var/lib/apt/lists/*
++RUN curl -sSf https://rustwasm.github.io/wasm-pack/installer/init.sh | sh
++# Manifests first so cargo registry warm-up reuses cache when sources change.
++COPY Cargo.toml Cargo.lock ./
++COPY crates/percival/Cargo.toml         crates/percival/Cargo.toml
++COPY crates/percival-cli/Cargo.toml     crates/percival-cli/Cargo.toml
++COPY crates/percival-wasm/Cargo.toml    crates/percival-wasm/Cargo.toml
++RUN --mount=type=cache,target=/usr/local/cargo/registry \
++    mkdir -p crates/percival/src crates/percival-cli/src crates/percival-wasm/src \
++    && echo "" > crates/percival/src/lib.rs \
++    && echo "fn main() {}" > crates/percival-cli/src/main.rs \
++    && echo "" > crates/percival-wasm/src/lib.rs \
++    && cargo fetch --locked
++COPY crates ./crates
++RUN --mount=type=cache,target=/usr/local/cargo/registry \
++    --mount=type=cache,target=/build/target \
++    wasm-pack build --target web crates/percival-wasm
++
++FROM node:20-bookworm-slim AS web-builder
++WORKDIR /build
++# Lockfile + patches first so npm cache survives source-only edits.
++COPY package.json package-lock.json ./
++COPY patches ./patches
++COPY --from=wasm-builder /build/crates/percival-wasm/pkg ./crates/percival-wasm/pkg
++RUN --mount=type=cache,target=/root/.npm \
++    npm ci --no-audit --no-fund
++COPY . .
++# Re-stamp pkg in case .dockerignore would have hidden it from `COPY . .`.
++COPY --from=wasm-builder /build/crates/percival-wasm/pkg ./crates/percival-wasm/pkg
++RUN npm run build
++
++FROM golang:1.22-bookworm AS go-builder
++WORKDIR /build
++COPY go.mod go.sum ./
++RUN --mount=type=cache,target=/go/pkg/mod \
++    --mount=type=cache,target=/root/.cache/go-build \
++    go mod download
++COPY main.go ./
++COPY api ./api
++COPY --from=web-builder /build/dist ./dist
++RUN --mount=type=cache,target=/go/pkg/mod \
++    --mount=type=cache,target=/root/.cache/go-build \
++    CGO_ENABLED=0 GOOS=linux go build \
++        -trimpath -ldflags="-s -w" \
++        -o /percival ./
++
++FROM gcr.io/distroless/static-debian12:nonroot
++COPY --from=go-builder /percival /percival
++EXPOSE 8080
++USER nonroot:nonroot
++ENTRYPOINT ["/percival"]
+diff --git a/main.go b/main.go
+index f63f4f6..5ac9738 100644
+--- a/main.go
++++ b/main.go
+@@ -1,25 +1,55 @@
+-// This file is a helper to locally run the serverless function defined in
+-// `api/`, for development purposes. It shouldn't usually be relevant, unless
+-// you want to work on the "share notebooks as GitHub Gists" feature in your
+-// local development environment.
++// Self-hosted Percival entrypoint.
++//
++// Embeds the Vite-built `dist/` directory and serves it as a static site,
++// with `/api` (Gist sharing) routed to api.Handler when ENABLE_GIST_API=true.
++// Upstream `main.go` only existed for local API development; the public
++// percival.ink site is hosted on Vercel as a static front + serverless fn.
+ 
+ package main
+ 
+ import (
+-	"fmt"
++	"embed"
++	"io/fs"
+ 	"log"
+ 	"net/http"
++	"os"
+ 
+ 	"percival.ink/api"
+ )
+ 
+-func main() {
+-	http.HandleFunc("/api", api.Handler)
++//go:embed all:dist
++var distFS embed.FS
+ 
+-	fmt.Println("Listening at http://localhost:3030/api")
+-	err := http.ListenAndServe(":3030", nil)
++func main() {
++	addr := os.Getenv("LISTEN_ADDR")
++	if addr == "" {
++		addr = ":8080"
++	}
+ 
++	sub, err := fs.Sub(distFS, "dist")
+ 	if err != nil {
++		log.Fatalf("embedded dist/ unavailable: %v", err)
++	}
++
++	mux := http.NewServeMux()
++
++	if os.Getenv("ENABLE_GIST_API") == "true" {
++		mux.HandleFunc("/api", api.Handler)
++	} else {
++		mux.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
++			http.Error(w, "Gist sharing not enabled in self-hosted Percival.", http.StatusNotImplemented)
++		})
++	}
++
++	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
++		w.Header().Set("Content-Type", "text/plain")
++		_, _ = w.Write([]byte("ok\n"))
++	})
++
++	mux.Handle("/", http.FileServer(http.FS(sub)))
++
++	log.Printf("Percival listening on %s", addr)
++	if err := http.ListenAndServe(addr, mux); err != nil {
+ 		log.Fatal(err)
+ 	}
+ }
