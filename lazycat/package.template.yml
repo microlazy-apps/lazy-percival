@@ -5,6 +5,11 @@ description: 基于 Web 的响应式 Datalog 笔记本，用于数据查询与�
 author: ekzhang
 license: MIT
 homepage: https://github.com/microlazy-apps/lazy-percival
+
+unsupported_platforms:
+  - ios
+  - android
+
 locales:
   zh-CN:
     name: Percival
